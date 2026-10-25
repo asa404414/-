@@ -1,0 +1,1432 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>タイピング練習 B9</title>
+  <style>
+    :root {
+      --bg-color: #f4f6f9;
+      --card-bg: #ffffff;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --text-main: #1e293b;
+      --text-sub: #64748b;
+      --border-color: #cbd5e1;
+      --key-bg: #e2e8f0;
+      --key-active: #2563eb;
+      --key-text: #0f172a;
+      --error-color: #ef4444;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text-main); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+
+    .container {
+      width: 100%; max-width: 920px; background: var(--card-bg); border-radius: 16px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); padding: 24px 32px; display: flex; flex-direction: column; gap: 16px;
+      position: relative;
+    }
+
+    header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 12px; }
+    h1 { font-size: 1.4rem; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
+
+    .settings-bar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .select-group { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--text-sub); }
+    select { padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-color); background-color: #fff; font-size: 0.9rem; color: var(--text-main); cursor: pointer; outline: none; }
+
+    .score-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; background: #f8fafc; padding: 12px 16px; border-radius: 12px; border: 1px solid #e2e8f0; }
+    .score-item { text-align: center; }
+    .score-label { font-size: 0.75rem; color: var(--text-sub); margin-bottom: 2px; }
+    .score-val { font-size: 1.25rem; font-weight: 700; color: var(--primary); }
+
+    .display-area {
+      background: #f1f5f9; border-radius: 12px; padding: 20px 24px; text-align: center; min-height: 240px;
+      display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px; position: relative;
+      transition: background-color 0.15s ease; border: 2px solid transparent; overflow: hidden;
+    }
+
+    .display-area.miss-effect {
+      background-color: #fef2f2 !important; border-color: var(--error-color) !important;
+      animation: shake 0.25s cubic-bezier(.36,.07,.19,.97) both;
+    }
+
+    @keyframes shake {
+      10%, 90% { transform: translate3d(-2px, 0, 0); }
+      20%, 80% { transform: translate3d(4px, 0, 0); }
+      30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+      40%, 60% { transform: translate3d(6px, 0, 0); }
+    }
+
+    .btn-retry-word {
+      position: absolute; top: 12px; right: 12px; background: #ffffff; border: 1px solid var(--border-color);
+      color: var(--text-sub); padding: 6px 12px; font-size: 0.8rem; font-weight: 600; border-radius: 20px;
+      cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); z-index: 5;
+    }
+    .btn-retry-word:hover { background: #f1f5f9; color: var(--primary); border-color: var(--primary); }
+
+    .word-kana { font-size: 1.1rem; color: var(--text-sub); font-weight: 600; min-height: 1.4em; }
+    .word-kanji { font-size: 2.3rem; font-weight: 800; color: var(--text-main); letter-spacing: 1px; min-height: 1.3em; }
+    .word-roma { font-size: 2rem; font-family: 'Courier New', Courier, monospace; font-weight: 800; letter-spacing: 3px; margin-top: 4px; text-transform: uppercase; }
+    
+    .roma-typed { color: #94a3b8; }
+    .roma-next { color: var(--primary); text-decoration: underline; background: #dbeafe; border-radius: 3px; padding: 0 2px; }
+    .roma-untyped { color: var(--text-main); }
+
+    .overlay {
+      position: absolute; inset: 0; background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(6px);
+      border-radius: 12px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 14px; z-index: 20; padding: 20px;
+    }
+
+    .btn-start { background: var(--primary); color: #fff; border: none; padding: 12px 32px; font-size: 1.1rem; font-weight: 700; border-radius: 30px; cursor: pointer; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); transition: all 0.2s; }
+    .btn-start:hover { background: var(--primary-hover); transform: translateY(-1px); }
+
+    .btn-sub { background: #f1f5f9; color: var(--text-main); border: 1px solid var(--border-color); padding: 8px 18px; font-size: 0.9rem; font-weight: 600; border-radius: 20px; cursor: pointer; transition: all 0.2s; }
+    .btn-sub:hover { background: #e2e8f0; }
+
+    .result-card { width: 100%; max-width: 600px; text-align: center; }
+    .result-card h2 { font-size: 1.4rem; color: var(--text-main); margin-bottom: 12px; font-weight: 800; letter-spacing: 1px; }
+    
+    .primary-results {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+      background: #eff6ff; border: 2px solid #bfdbfe; border-radius: 10px; padding: 12px; margin-bottom: 12px;
+    }
+    .res-box { text-align: center; }
+    .res-box-label { font-size: 0.75rem; font-weight: 700; color: var(--text-sub); margin-bottom: 2px; }
+    .res-box-val { font-size: 1.4rem; font-weight: 800; color: var(--primary); }
+
+    .secondary-results {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+      background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px; margin-bottom: 12px;
+    }
+    .sub-box { text-align: center; }
+    .sub-box-label { font-size: 0.7rem; color: var(--text-sub); }
+    .sub-box-val { font-size: 0.95rem; font-weight: 700; color: var(--text-main); }
+
+    /* 写真再現用のミスログコンテナ */
+    .miss-log-container {
+      width: 100%; max-height: 220px; overflow-y: auto; background: #ffffff;
+      border: 1px solid var(--border-color); border-radius: 10px; padding: 12px;
+      display: flex; flex-direction: column; gap: 16px; text-align: left;
+    }
+
+    .miss-card {
+      border-bottom: 1px dashed #e2e8f0; padding-bottom: 12px; font-family: sans-serif;
+    }
+    .miss-card:last-child { border-bottom: none; padding-bottom: 0; }
+
+    .miss-kanji { font-size: 1.4rem; font-weight: 700; color: #334155; margin-bottom: 2px; }
+    .miss-kana { font-size: 1.2rem; font-weight: 600; color: #475569; margin-bottom: 6px; letter-spacing: 1px; }
+    .miss-roma { font-size: 1.25rem; font-weight: 700; font-family: 'Courier New', monospace; color: #334155; margin-bottom: 8px; letter-spacing: 1px; }
+    
+    .char-err { color: #ef4444; font-weight: 800; }
+
+    .miss-stats-line {
+      display: flex; gap: 16px; font-size: 0.85rem; font-weight: 700; color: #64748b; justify-content: flex-end;
+    }
+    .miss-stats-line span { color: #0284c7; }
+    .miss-stats-line .stat-err { color: #ef4444; }
+
+    .keyboard { display: flex; flex-direction: column; gap: 6px; background: #f8fafc; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; user-select: none; }
+    .kb-row { display: flex; justify-content: center; gap: 4px; }
+    .key { width: 40px; height: 40px; background: var(--key-bg); color: var(--key-text); border-radius: 6px; display: flex; justify-content: center; align-items: center; font-size: 0.85rem; font-weight: 600; box-shadow: 0 2px 0 #cbd5e1; position: relative; }
+    .key.active { background: var(--key-active) !important; color: #ffffff !important; box-shadow: 0 0 0 2px #93c5fd, 0 2px 0 #1d4ed8; }
+
+    /* B2: 左右共通の指別カラー。キーと手の指は同じ色。 */
+    .finger-l5, .finger-r5 { background: #f9c7ce; }
+    .finger-l4, .finger-r4 { background: #ffdab0; }
+    .finger-l3, .finger-r3 { background: #f9e68c; }
+    .finger-l2, .finger-r2 { background: #b7e8cb; }
+    .finger-thumb { background: #dce2ea; }
+    .home-marker::after { content: ''; position: absolute; bottom: 4px; width: 6px; height: 2px; background: #64748b; border-radius: 1px; }
+
+    .hands-container { display: flex; justify-content: center; align-items: center; gap: 36px; margin-top: 6px; padding: 10px 8px; background: #ffffff; border-radius: 10px; border: 1px solid #e2e8f0; }
+    .hand-box { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .hand-label { font-size: 0.85rem; font-weight: 700; color: var(--text-sub); }
+    .hand-svg { width: 174px; height: 137px; max-width: 100%; overflow: visible; }
+    /* B4: やわらかい手袋型。輪郭をくっきりさせ、指の色は必要な一本のみ。 */
+    .hand-palm { fill: #eef2f7; stroke: #64748b; stroke-width: 2; stroke-linejoin: round; }
+    .finger-part { stroke: #64748b; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: filter 0.15s ease, stroke-width 0.15s ease; }
+    /* B3: 手は通常すべて無彩色。次に使う指だけキーの指別カラーで表示する。 */
+    .finger-part { fill: #eef2f7; }
+    .finger-pinky.active-finger { fill: #f9c7ce; }
+    .finger-ring.active-finger { fill: #ffdab0; }
+    .finger-middle.active-finger { fill: #f9e68c; }
+    .finger-index.active-finger { fill: #b7e8cb; }
+    .finger-thumb-color.active-finger { fill: #dce2ea; }
+    .finger-part.active-finger { stroke: #1d4ed8; stroke-width: 4; filter: drop-shadow(0 0 3px rgba(37,99,235,.5)); }
+    .key.active { background: var(--key-active) !important; color: #ffffff !important; box-shadow: 0 0 0 3px #1d4ed8, 0 2px 0 #1d4ed8; }
+    .finger-legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 12px; font-size: .76rem; font-weight: 700; color: #334155; }
+    .finger-legend span { display: inline-flex; align-items: center; gap: 4px; }
+    .finger-legend i { display: inline-block; width: 12px; height: 12px; border: 1px solid #94a3b8; border-radius: 4px; }
+    @media (max-width: 480px) { .hands-container { gap: 8px; } .hand-svg { width: 145px; height: 115px; } }
+
+    .roadmap-note { font-size: 0.75rem; color: var(--text-sub); text-align: center; border-top: 1px dashed var(--border-color); padding-top: 8px; }
+
+    /* B7: teacher vocabulary editor; closed by default so lesson layout stays unchanged */
+    .editor-toggle { margin: 9px 0 0; text-align: right; }
+    .editor-toggle button, .vocab-panel button { cursor: pointer; border: 1px solid #cbd5e1; background: white; color: #334155; border-radius: 7px; padding: 7px 11px; font-weight: 700; }
+    .vocab-panel { margin: 12px 0; padding: 16px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; }
+    .vocab-panel[hidden] { display: none !important; }
+    .vocab-panel h2 { margin: 0 0 8px; font-size: 1.1rem; }
+    .vocab-panel p { font-size: .85rem; margin: 6px 0 12px; color: #475569; }
+    .vocab-fields { display: flex; flex-wrap: wrap; align-items: end; gap: 9px; margin: 10px 0; }
+    .vocab-fields label { display: flex; flex-direction: column; gap: 4px; font-size: .82rem; font-weight: 700; }
+    .vocab-fields input { padding: 8px; border: 1px solid #94a3b8; border-radius: 6px; font-size: 1rem; width: 165px; max-width: 100%; }
+    .vocab-fields button { align-self: end; }
+    .vocab-list { max-height: 260px; overflow-y: auto; border: 1px solid #e2e8f0; background: white; border-radius: 8px; }
+    .vocab-entry { display: flex; align-items: center; gap: 8px; padding: 7px 9px; border-bottom: 1px solid #e2e8f0; flex-wrap: wrap; font-size: .9rem; }
+    .vocab-entry:last-child { border-bottom: none; }
+    .vocab-entry .entry-name { flex: 1; min-width: 180px; }
+    .vocab-entry .entry-origin { color: #64748b; font-size: .75rem; }
+    .vocab-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .vocab-message { min-height: 1.2em; font-size: .85rem; color: #0f766e; }
+    .vocab-message.error { color: #b91c1c; }
+    .teacher-dialog { border: 1px solid #94a3b8; border-radius: 12px; padding: 22px; max-width: min(430px,90vw); box-shadow: 0 15px 55px #0005; }
+    .teacher-dialog::backdrop { background: #0008; }
+    .teacher-dialog label { display: block; margin: 12px 0; }
+    .teacher-dialog input { box-sizing: border-box; width: 100%; padding: 9px; font-size: 1rem; }
+    .teacher-dialog button { padding: 9px 16px; margin-right: 8px; }
+    .teacher-tools { display:flex; gap: 8px; flex-wrap:wrap; margin: 14px 0; padding: 12px; background: #e9f2ff; border-radius: 9px; }
+    .teacher-tools label { display:flex; align-items:center; gap:6px; }
+    .teacher-tools input { padding:7px; border-radius:6px; border:1px solid #94a3b8; }
+    .teacher-tools .teacher-wide { flex-basis:100%; font-size:.82rem; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>⌨ タイピング練習（実践対応・完走型）</h1>
+    <div class="settings-bar" id="settings-bar">
+      <div class="select-group">
+        <label for="category-select">テーマ:</label>
+        <select id="category-select" onchange="changeCategory()"></select>
+      </div>
+      <div class="select-group">
+        <label for="style-select">表記:</label>
+        <select id="style-select" onchange="changeStyle()">
+          <option value="hepburn">ヘボン式 (標準)</option>
+          <option value="kunrei">訓令式</option>
+        </select>
+      </div>
+      <div class="select-group">
+        <label for="mode-select">モード:</label>
+        <select id="mode-select">
+          <option value="complete">全問完走</option>
+        </select>
+      </div>
+      <div class="select-group">
+        <label for="order-select">出題順:</label>
+        <select id="order-select" onchange="resetGame()">
+          <option value="normal">順番どおり</option>
+          <option value="random">ランダム</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+
+
+  <p id="published-data-notice" role="status" style="font-size:0.78rem;color:#64748b">共通の問題データを確認中…</p>
+  <div class="score-bar">
+    <div class="score-item"><div class="score-label">進捗</div><div class="score-val" id="progress-val">0 / 25</div></div>
+    <div class="score-item"><div class="score-label">打鍵/秒</div><div class="score-val" id="kps-val">0.0</div></div>
+    <div class="score-item"><div class="score-label">正確率</div><div class="score-val" id="accuracy-val">100%</div></div>
+    <div class="score-item"><div class="score-label">ミス回数</div><div class="score-val" id="miss-val" style="color: var(--error-color);">0</div></div>
+  </div>
+
+  <div class="display-area" id="display-area">
+    <button class="btn-retry-word" id="btn-retry-word" onclick="retryCurrentWord()" style="display: none;">
+      ↺ 最初から打ち直す (Esc)
+    </button>
+
+    <div class="overlay" id="start-overlay">
+      <h2 id="start-title" style="font-size: 1.3rem;">タイピング練習（全25問）</h2>
+      <p style="color: var(--text-sub); font-size: 0.9rem;">テーマを選択し、「スタート」を押すか Space キーを押してください</p>
+      <button class="btn-start" onclick="startGame()">スタート (Space)</button>
+    </div>
+
+    <div class="overlay" id="result-overlay" style="display: none;">
+      <div class="result-card">
+        <h2>🏆 最終スコア</h2>
+        
+        <div class="primary-results">
+          <div class="res-box">
+            <div class="res-box-label">① 打鍵/秒 (速度)</div>
+            <div class="res-box-val" id="res-kps">0.0</div>
+          </div>
+          <div class="res-box">
+            <div class="res-box-label">② 正確率</div>
+            <div class="res-box-val" id="res-acc">100%</div>
+          </div>
+          <div class="res-box">
+            <div class="res-box-label">③ ミス（回数）</div>
+            <div class="res-box-val" id="res-miss" style="color: var(--error-color);">0</div>
+          </div>
+        </div>
+
+        <div class="secondary-results">
+          <div class="sub-box"><div class="sub-box-label">総合ポイント</div><div class="sub-box-val" id="res-score">0</div></div>
+          <div class="sub-box"><div class="sub-box-label">総打鍵数</div><div class="sub-box-val" id="res-keys">0</div></div>
+          <div class="sub-box"><div class="sub-box-label">かかった時間</div><div class="sub-box-val" id="res-time">0s</div></div>
+          <div class="sub-box"><div class="sub-box-label">ランク</div><div class="sub-box-val" id="res-rank" style="color: var(--primary);">S</div></div>
+        </div>
+
+        <div id="miss-log-wrapper" style="display: none; margin-bottom: 12px;">
+          <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-sub); margin-bottom: 6px; text-align: left;">
+            🔍 ミスした単語の詳細:
+          </div>
+          <div class="miss-log-container" id="miss-log-list"></div>
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: center; align-items: center;">
+          <button class="btn-sub" id="btn-toggle-log" onclick="toggleMissLog()">ミスした詳細を見る</button>
+          <button class="btn-start" onclick="startGame()">もう一度挑戦 (Space)</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="word-kana" id="word-kana">--</div>
+    <div class="word-kanji" id="word-kanji">--</div>
+    <div class="word-roma" id="word-roma">
+      <span class="roma-typed" id="roma-typed"></span><span class="roma-next" id="roma-next"></span><span class="roma-untyped" id="roma-untyped"></span>
+    </div>
+  </div>
+
+  <div class="keyboard" id="keyboard">
+    <div class="kb-row">
+      <div class="key finger-l5" id="key-q">Q</div><div class="key finger-l4" id="key-w">W</div><div class="key finger-l3" id="key-e">E</div><div class="key finger-l2" id="key-r">R</div><div class="key finger-l2" id="key-t">T</div>
+      <div class="key finger-r2" id="key-y">Y</div><div class="key finger-r2" id="key-u">U</div><div class="key finger-r3" id="key-i">I</div><div class="key finger-r4" id="key-o">O</div><div class="key finger-r5" id="key-p">P</div><div class="key finger-r5" id="key--">-</div>
+    </div>
+    <div class="kb-row">
+      <div class="key finger-l5" id="key-a">A</div><div class="key finger-l4" id="key-s">S</div><div class="key finger-l3" id="key-d">D</div><div class="key finger-l2 home-marker" id="key-f">F</div><div class="key finger-l2" id="key-g">G</div>
+      <div class="key finger-r2" id="key-h">H</div><div class="key finger-r2 home-marker" id="key-j">J</div><div class="key finger-r3" id="key-k">K</div><div class="key finger-r4" id="key-l">L</div><div class="key finger-r5" id="key-;">;</div>
+    </div>
+    <div class="kb-row">
+      <div class="key finger-l5" id="key-z">Z</div><div class="key finger-l4" id="key-x">X</div><div class="key finger-l3" id="key-c">C</div><div class="key finger-l2" id="key-v">V</div><div class="key finger-l2" id="key-b">B</div>
+      <div class="key finger-r2" id="key-n">N</div><div class="key finger-r2" id="key-m">M</div><div class="key finger-r3" id="key-,">,</div><div class="key finger-r4" id="key-.">.</div><div class="key finger-r5" id="key-/">/</div>
+    </div>
+    <div class="kb-row">
+      <div class="key finger-thumb" id="key-space" style="width: 240px;">Space</div>
+    </div>
+  </div>
+
+  <div class="hands-container">
+    <div class="hand-box">
+      <div class="hand-label">左手</div>
+      <svg class="hand-svg" viewBox="0 0 160 140" role="img" aria-label="左手の指と色分け">
+        <path class="hand-palm" d="M 35 79 Q 37 66 50 65 L 106 65 Q 120 67 121 83 L 119 126 Q 118 131 113 131 L 45 131 Q 40 131 39 126 Z"/>
+        <path id="fin-l5" class="finger-part finger-pinky" d="M 39 92 Q 33 78 23 63 Q 18 54 24 49 Q 32 43 38 53 L 57 82 L 56 99 Z"/>
+        <path id="fin-l4" class="finger-part finger-ring" d="M 52 86 L 40 38 Q 37 26 45 23 Q 54 21 57 33 L 70 84 Z"/>
+        <path id="fin-l3" class="finger-part finger-middle" d="M 68 83 L 64 23 Q 63 11 73 11 Q 83 11 83 23 L 85 83 Z"/>
+        <path id="fin-l2" class="finger-part finger-index" d="M 84 85 L 89 35 Q 90 23 99 24 Q 108 25 107 36 L 103 88 Z"/>
+        <path id="fin-l1" class="finger-part finger-thumb-color" d="M 105 95 L 126 69 Q 134 60 141 68 Q 147 75 139 84 L 119 112 Z"/>
+      </svg>
+    </div>
+    <div class="hand-box">
+      <div class="hand-label">右手</div>
+      <svg class="hand-svg" viewBox="0 0 160 140" role="img" aria-label="右手の指と色分け">
+        <g transform="translate(160 0) scale(-1 1)">
+        <path class="hand-palm" d="M 35 79 Q 37 66 50 65 L 106 65 Q 120 67 121 83 L 119 126 Q 118 131 113 131 L 45 131 Q 40 131 39 126 Z"/>
+        <path id="fin-r5" class="finger-part finger-pinky" d="M 39 92 Q 33 78 23 63 Q 18 54 24 49 Q 32 43 38 53 L 57 82 L 56 99 Z"/>
+        <path id="fin-r4" class="finger-part finger-ring" d="M 52 86 L 40 38 Q 37 26 45 23 Q 54 21 57 33 L 70 84 Z"/>
+        <path id="fin-r3" class="finger-part finger-middle" d="M 68 83 L 64 23 Q 63 11 73 11 Q 83 11 83 23 L 85 83 Z"/>
+        <path id="fin-r2" class="finger-part finger-index" d="M 84 85 L 89 35 Q 90 23 99 24 Q 108 25 107 36 L 103 88 Z"/>
+        <path id="fin-r1" class="finger-part finger-thumb-color" d="M 105 95 L 126 69 Q 134 60 141 68 Q 147 75 139 84 L 119 112 Z"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+  <div class="finger-legend" aria-label="指の色の説明">
+    <span><i style="background:#f9c7ce"></i>小指</span>
+    <span><i style="background:#ffdab0"></i>薬指</span>
+    <span><i style="background:#f9e68c"></i>中指</span>
+    <span><i style="background:#b7e8cb"></i>人差し指</span>
+    <span><i style="background:#dce2ea"></i>親指</span>
+  </div>
+
+  <div class="roadmap-note">
+    💡 今後の追加予定：【第1フェーズ】タイムトライアルモード実装 / 【第2フェーズ】「組・出席番号」入力＆Googleシート一括集計機能
+  </div>
+</div>
+
+<script>
+  /* 今後の開発候補（未実装・一つずつ検討）
+   * 1. 楽しいゲーム版（タイムトライアル、寿司打風など）
+   * 2. 学校でよく使う単語を簡単に追加できる仕組み
+   * 3. GitHub等による更新・配布の簡易化
+   * 4. ランク基準：B1で実装済み（速度＋正確率、S/A/B/C）
+   * 6. 練習記録保存と自己ベスト更新表示（後日まとめて実装）
+   * 7. ランダム出題：B5で実装済み。問題数選択・電車や冒険などのゲーム版（後日検討）
+   * 5. Backspace・変換・Enter・Spaceを使う実践練習
+   * 既存の構想：組・出席番号の入力とGoogleシート集計
+   */
+  const categoryList = [
+    {
+      id: "week1",
+      name: "第1回：スマホとネットマナー（25問）",
+      words: [
+        { kanji: "スマホ", kana: "すまほ" }, { kanji: "パスワード", kana: "ぱすわーど" },
+        { kanji: "アプリ", kana: "あぷり" }, { kanji: "充電器", kana: "じゅうでんき" },
+        { kanji: "WiFi", kana: "わいふぁい" }, { kanji: "写真", kana: "しゃしん" },
+        { kanji: "動画", kana: "どうが" }, { kanji: "通知", kana: "つうち" },
+        { kanji: "検索", kana: "けんさく" }, { kanji: "グループ", kana: "ぐるーぷ" },
+        { kanji: "メッセージ", kana: "めっせーじ" }, { kanji: "画面割れ", kana: "がめんわれ" },
+        { kanji: "歩きスマホ", kana: "あるきすまほ" }, { kanji: "個人情報", kana: "こじんじょうほう" },
+        { kanji: "著作権", kana: "ちょさくけん" }, { kanji: "アカウント", kana: "あかうんと" },
+        { kanji: "ログイン", kana: "ろぐいん" }, { kanji: "保存", kana: "ほぞん" },
+        { kanji: "共有", kana: "きょうゆう" }, { kanji: "炎上注意", kana: "えんじょうちゅうい" },
+        { kanji: "設定", kana: "せってい" }, { kanji: "通信量", kana: "つうしんりょう" },
+        { kanji: "アイコン", kana: "あいこん" }, { kanji: "スタンプ", kana: "すたんぷ" },
+        { kanji: "マナーモード", kana: "まなーもーど" }
+      ]
+    },
+    {
+      id: "week2",
+      name: "第2回：学校生活と昼休み（25問）",
+      words: [
+        { kanji: "お弁当", kana: "おべんとう" }, { kanji: "購買", kana: "こうばい" },
+        { kanji: "制服", kana: "せいふく" }, { kanji: "上履き", kana: "うわばき" },
+        { kanji: "チャイム", kana: "ちゃいむ" }, { kanji: "掃除当番", kana: "そうじとうばん" },
+        { kanji: "日直", kana: "にっちょく" }, { kanji: "黒板", kana: "こくばん" },
+        { kanji: "教科書", kana: "きょうかしょ" }, { kanji: "筆箱", kana: "ふでばこ" },
+        { kanji: "プリント", kana: "ぷりんと" }, { kanji: "移動教室", kana: "いどうきょうしつ" },
+        { kanji: "校庭", kana: "こうてい" }, { kanji: "体育館", kana: "たいいくかん" },
+        { kanji: "図書室", kana: "としょしつ" }, { kanji: "自動販売機", kana: "じどうはんばいき" },
+        { kanji: "休み時間", kana: "やすみじかん" }, { kanji: "せき替え", kana: "せきがえ" },
+        { kanji: "クラスメイト", kana: "くらすめいと" }, { kanji: "担任の先生", kana: "たんにんのせんせい" },
+        { kanji: "校歌", kana: "こうか" }, { kanji: "学食", kana: "がくしょく" },
+        { kanji: "ロッカー", kana: "ろっかー" }, { kanji: "放課後", kana: "ほうかご" },
+        { kanji: "水筒", kana: "すいとう" }
+      ]
+    },
+    {
+      id: "week3",
+      name: "第3回：部活と放課後（25問）",
+      words: [
+        { kanji: "部活動", kana: "ぶかつどう" }, { kanji: "先輩", kana: "せんぱい" },
+        { kanji: "後輩", kana: "こうはい" }, { kanji: "マネージャー", kana: "まねーじゃー" },
+        { kanji: "大会", kana: "たいかい" }, { kanji: "試合", kana: "しあい" },
+        { kanji: "練習着", kana: "れんしゅうぎ" }, { kanji: "朝練", kana: "あされん" },
+        { kanji: "居残りの練習", kana: "いのこりのれんしゅう" }, { kanji: "ミーティング", kana: "みーてぃんぐ" },
+        { kanji: "ユニフォーム", kana: "ゆにふぉーむ" }, { kanji: "公式戦", kana: "こうしきせん" },
+        { kanji: "遠征", kana: "えんせい" }, { kanji: "文化部", kana: "ぶんかぶ" },
+        { kanji: "運動部", kana: "うんどうぶ" }, { kanji: "掛け声", kana: "かけごえ" },
+        { kanji: "準備運動", kana: "じゅんびうんどう" }, { kanji: "片付け", kana: "かたづけ" },
+        { kanji: "部室", kana: "ぶしつ" }, { kanji: "勝利", kana: "しょうり" },
+        { kanji: "ライバル", kana: "らいばる" }, { kanji: "目標達成", kana: "もくひょうたっせい" },
+        { kanji: "応援", kana: "おうえん" }, { kanji: "引退", kana: "いんたい" },
+        { kanji: "青春", kana: "せいしゅん" }
+      ]
+    },
+    {
+      id: "week4",
+      name: "第4回：テストと勉強（25問）",
+      words: [
+        { kanji: "中間テスト", kana: "ちゅうかんてすと" }, { kanji: "期末テスト", kana: "きまつてすと" },
+        { kanji: "単語帳", kana: "たんごちょう" }, { kanji: "赤点", kana: "あかてん" },
+        { kanji: "提出物", kana: "ていしゅつぶつ" }, { kanji: "課題", kana: "かだい" },
+        { kanji: "一夜漬け", kana: "いちやづけ" }, { kanji: "暗記", kana: "あんき" },
+        { kanji: "シャープペン", kana: "しゃーぷぺん" }, { kanji: "消しゴム", kana: "けしごむ" },
+        { kanji: "ノート", kana: "のーと" }, { kanji: "蛍光ペン", kana: "けいこうぺん" },
+        { kanji: "範囲指定", kana: "はんいいしてい" }, { kanji: "補習", kana: "ほしゅう" },
+        { kanji: "平均点", kana: "へいきんてん" }, { kanji: "順位", kana: "じゅんい" },
+        { kanji: "模試", kana: "もし" }, { kanji: "図書館", kana: "としょかん" },
+        { kanji: "自習室", kana: "じしゅうしつ" }, { kanji: "集中力", kana: "しゅうちゅうりょく" },
+        { kanji: "合格", kana: "ごうかく" }, { kanji: "解き直し", kana: "ときなおし" },
+        { kanji: "過去問", kana: "かこもん" }, { kanji: "計算問題", kana: "けいさんもんだい" },
+        { kanji: "手帳", kana: "てちょう" }
+      ]
+    },
+    {
+      id: "week5",
+      name: "第5回：学校行事（25問）",
+      words: [
+        { kanji: "文化祭", kana: "ぶんかさい" }, { kanji: "体育祭", kana: "たいいくさい" },
+        { kanji: "修学旅行", kana: "しゅうがくりょこう" }, { kanji: "球技大会", kana: "きゅうぎたいかい" },
+        { kanji: "合唱コンクール", kana: "がっしょうこんくーる" }, { kanji: "クラスTシャツ", kana: "くらすてぃーしゃつ" },
+        { kanji: "実行委員", kana: "じっこういいん" }, { kanji: "模擬店", kana: "もぎてん" },
+        { kanji: "看板作り", kana: "かんばんづくり" }, { kanji: "リレー", kana: "りれー" },
+        { kanji: "綱引き", kana: "つなひき" }, { kanji: "ダンス", kana: "だんす" },
+        { kanji: "前日準備", kana: "ぜんじつじゅんび" }, { kanji: "スローガン", kana: "すろーがん" },
+        { kanji: "打ち上げ", kana: "うちあげ" }, { kanji: "記念写真", kana: "きねんしゃしん" },
+        { kanji: "自由行動", kana: "じゆうこうどう" }, { kanji: "新幹線", kana: "しんかんせん" },
+        { kanji: "お土産", kana: "おみやげ" }, { kanji: "思い出", kana: "おもいで" },
+        { kanji: "団結力", kana: "だんけつりょく" }, { kanji: "開会式", kana: "かいかいしき" },
+        { kanji: "閉会式", kana: "へいかいしき" }, { kanji: "表彰", kana: "ひょうしょう" },
+        { kanji: "歓声", kana: "かんせい" }
+      ]
+    },
+    {
+      id: "week6",
+      name: "第6回：通学と交通（25問）",
+      words: [
+        { kanji: "自転車通学", kana: "じてんしゃつうがく" }, { kanji: "定期券", kana: "ていきけん" },
+        { kanji: "ICカード", kana: "あいしーかーど" }, { kanji: "満員電車", kana: "まんいんでんしゃ" },
+        { kanji: "バス停", kana: "ばすてい" }, { kanji: "遅延証明書", kana: "ちえんしょうめいしょ" },
+        { kanji: "横断歩道", kana: "おうだんほどう" }, { kanji: "ヘルメット", kana: "へるめっと" },
+        { kanji: "レインコート", kana: "れいんこーと" }, { kanji: "改札口", kana: "かいさつぐち" },
+        { kanji: "発車ベル", kana: "はっしゃべる" }, { kanji: "乗り換え", kana: "のりかえ" },
+        { kanji: "ホームドア", kana: "ほーむどあ" }, { kanji: "安全確認", kana: "あんぜんかくにん" },
+        { kanji: "イヤホン", kana: "いやほん" }, { kanji: "リュック", kana: "りゅっく" },
+        { kanji: "坂道", kana: "さかみち" }, { kanji: "早起き", kana: "はやおき" },
+        { kanji: "二度寝", kana: "にどね" }, { kanji: "遅刻ギリギリ", kana: "ちこくぎりぎり" },
+        { kanji: "信号待ち", kana: "しんごうまち" }, { kanji: "遠回り", kana: "とおまわり" },
+        { kanji: "始発電車", kana: "しはつでんしゃ" }, { kanji: "歩道橋", kana: "ほどうきょう" },
+        { kanji: "帰り道", kana: "かえりみち" }
+      ]
+    },
+    {
+      id: "week7",
+      name: "第7回：バイトとお小遣い（25問）",
+      words: [
+        { kanji: "アルバイト", kana: "あるばいと" }, { kanji: "時給", kana: "じきゅう" },
+        { kanji: "コンビニ", kana: "こんびに" }, { kanji: "ファミレス", kana: "ふぁみれす" },
+        { kanji: "接客", kana: "せっきゃく" }, { kanji: "レジ打ち", kana: "れじうち" },
+        { kanji: "シフト", kana: "しふと" }, { kanji: "まかない", kana: "まかない" },
+        { kanji: "お小遣い", kana: "おこづかい" }, { kanji: "貯金", kana: "ちょきん" },
+        { kanji: "タッチ決済", kana: "たっちけっさい" }, { kanji: "値札", kana: "ねふだ" },
+        { kanji: "新商品", kana: "しんしょうひん" }, { kanji: "品出し", kana: "しなだし" },
+        { kanji: "ユニフォーム", kana: "ゆにふぉーむ" }, { kanji: "給料日", kana: "きゅうりょうび" },
+        { kanji: "ご褒美", kana: "ごほうび" }, { kanji: "無駄遣い", kana: "むだづかい" },
+        { kanji: "予算", kana: "よさん" }, { kanji: "セール", kana: "せーる" },
+        { kanji: "ポイ活", kana: "ぽいかつ" }, { kanji: "レシート", kana: "れしーと" },
+        { kanji: "社会経験", kana: "しゃかいけいけん" }, { kanji: "挨拶", kana: "あいさつ" },
+        { kanji: "言葉遣い", kana: "ことばづかい" }
+      ]
+    },
+    {
+      id: "week8",
+      name: "第8回：パソコンと情報の基本（25問）",
+      words: [
+        { kanji: "キーボード", kana: "きーぼーど" }, { kanji: "マウス", kana: "まうす" },
+        { kanji: "ディスプレイ", kana: "でぃすぷれい" }, { kanji: "フォルダ", kana: "ふぉるだ" },
+        { kanji: "ファイル", kana: "ふぁいる" }, { kanji: "コピー", kana: "こぴー" },
+        { kanji: "ペースト", kana: "ぺーすと" }, { kanji: "保存", kana: "ほぞん" },
+        { kanji: "削除", kana: "さくじょ" }, { kanji: "タイピング", kana: "たいぴんぐ" },
+        { kanji: "ホームポジション", kana: "ほーむぽじしょん" }, { kanji: "インターネット", kana: "いんたーねっと" },
+        { kanji: "ブラウザ", kana: "ぶらうざ" }, { kanji: "メール", kana: "めーる" },
+        { kanji: "送信", kana: "そうしん" }, { kanji: "受信", kana: "じゅしん" },
+        { kanji: "添付ファイル", kana: "てんぷふぁいる" }, { kanji: "プリンター", kana: "ぷりんたー" },
+        { kanji: "印刷", kana: "いんさつ" }, { kanji: "再起動", kana: "さいきどう" },
+        { kanji: "シャットダウン", kana: "しゃっとだうん" }, { kanji: "ウイルス対策", kana: "ういるすたいさく" },
+        { kanji: "プログラミング", kana: "ぷろぐらみんぐ" }, { kanji: "データ", kana: "でーた" },
+        { kanji: "バックアップ", kana: "ばっくあっぷ" }
+      ]
+    },
+    {
+      id: "week9",
+      name: "第9回：進路と将来（25問）",
+      words: [
+        { kanji: "進路希望", kana: "しんろきぼう" }, { kanji: "大学", kana: "だいがく" },
+        { kanji: "専門学校", kana: "せんもんがっこう" }, { kanji: "就職", kana: "しゅうしょく" },
+        { kanji: "面接練習", kana: "めんせつれんしゅう" }, { kanji: "履歴書", kana: "りれきしょ" },
+        { kanji: "自己PR", kana: "じこぴーあーる" }, { kanji: "志望理由", kana: "しぼうりゆう" },
+        { kanji: "オープンキャンパス", kana: "おーぷんきゃんぱす" }, { kanji: "資格取得", kana: "しかくしゅとく" },
+        { kanji: "検定試験", kana: "けんていしけん" }, { kanji: "夢", kana: "ゆめ" },
+        { kanji: "将来の目標", kana: "しょうらいのもくひょう" }, { kanji: "適性検査", kana: "てきせいけんさ" },
+        { kanji: "三者面談", kana: "さんしゃめんだん" }, { kanji: "長所と短所", kana: "ちょうしょとたんしょ" },
+        { kanji: "マナー", kana: "まなー" }, { kanji: "スーツ", kana: "すーつ" },
+        { kanji: "見学会", kana: "けんがくかい" }, { kanji: "奨学金", kana: "しょうがくきん" },
+        { kanji: "一人暮らし", kana: "ひとりぐらし" }, { kanji: "新生活", kana: "しんせいかつ" },
+        { kanji: "スケジュール管理", kana: "すけじゅーるかんり" }, { kanji: "挑戦", kana: "ちょうせん" },
+        { kanji: "自信を持つ", kana: "じしんをもつ" }
+      ]
+    },
+    {
+      id: "week10",
+      name: "第10回：日常のあいさつと連絡（25問）",
+      words: [
+        { kanji: "おはようございます", kana: "おはようございます" },
+        { kanji: "よろしくお願いします", kana: "よろしくおねがいします" },
+        { kanji: "ありがとうございます", kana: "ありがとうございます" },
+        { kanji: "お疲れ様でした", kana: "おつかれさまでした" },
+        { kanji: "すみませんでした", kana: "すみませんでした" },
+        { kanji: "失礼します", kana: "しつれいします" },
+        { kanji: "体調不良のため欠席します", kana: "たいちょうふりょうのためけっせきします" },
+        { kanji: "遅刻します", kana: "ちこくします" },
+        { kanji: "確認しました", kana: "かくにんしました" },
+        { kanji: "承知いたしました", kana: "しょうちいたしました" },
+        { kanji: "資料を送ります", kana: "しりょうをおくります" },
+        { kanji: "また連絡します", kana: "またれんらくします" },
+        { kanji: "少々お待ちください", kana: "しょうしょうおまちください" },
+        { kanji: "お返事お待ちしています", kana: "おへんじおまちしています" },
+        { kanji: "ご案内いたします", kana: "ごあんないいたします" },
+        { kanji: "準備ができました", kana: "じゅんびができました" },
+        { kanji: "提出をお願いします", kana: "ていしゅつをおねがいします" },
+        { kanji: "相談したいことがあります", kana: "そうだんしたいことがあります" },
+        { kanji: "気を付けて帰ってください", kana: "きをつけてかえってください" },
+        { kanji: "よい休日をお過ごしください", kana: "よいきゅうじつをおすごしください" },
+        { kanji: "提出期限は明日です", kana: "ていしゅつきげんはあしたです" },
+        { kanji: "グループに参加してください", kana: "ぐるーぷにさんかしてください" },
+        { kanji: "ファイルを共有しました", kana: "ふぁいるをきょうゆうしました" },
+        { kanji: "パスワードを忘れました", kana: "ぱすわーどをわすれました" },
+        { kanji: "無事に到着しました", kana: "ぶじにとうちゃくしました" }
+      ]
+    }
+  ];
+
+  const ROMAJI_MAP = {
+    'あ':['a'],'い':['i'],'う':['u'],'え':['e'],'お':['o'],
+    'か':['ka','ca'],'き':['ki'],'く':['ku','cu'],'け':['ke'],'こ':['ko','co'],
+    'さ':['sa'],'し':['shi','si'],'す':['su'],'せ':['se'],'そ':['so'],
+    'た':['ta'],'ち':['chi','ti'],'つ':['tsu','tu'],'て':['te'],'と':['to'],
+    'な':['na'],'に':['ni'],'ぬ':['nu'],'ね':['ne'],'の':['no'],
+    'は':['ha'],'ひ':['hi'],'ふ':['fu','hu'],'へ':['he'],'ほ':['ho'],
+    'ま':['ma'],'み':['mi'],'む':['mu'],'め':['me'],'も':['mo'],
+    'や':['ya'],'ゆ':['yu'],'よ':['yo'],
+    'ら':['ra'],'り':['ri'],'る':['ru'],'れ':['re'],'ろ':['ro'],
+    'わ':['wa'],'を':['wo'],'ん':['nn','n','xn'],
+    'が':['ga'],'ぎ':['gi'],'ぐ':['gu'],'げ':['ge'],'ご':['go'],
+    'ざ':['za'],'じ':['ji','zi'],'ず':['zu'],'ぜ':['ze'],'ぞ':['zo'],
+    'だ':['da'],'ぢ':['di'],'づ':['du'],'で':['de'],'ど':['do'],
+    'ば':['ba'],'び':['bi'],'ぶ':['bu'],'べ':['be'],'ぼ':['bo'],
+    'ぱ':['pa'],'ぴ':['pi'],'ぷ':['pu'],'ぺ':['pe'],'ぽ':['po'],
+    'きゃ':['kya'],'きゅ':['kyu'],'きょ':['kyo'],
+    'しゃ':['sha','sya'],'しゅ':['shu','syu'],'しょ':['sho','syo'],'しぇ':['she','sye'],
+    'ちゃ':['cha','tya'],'ちゅ':['chu','tyu'],'ちょ':['cho','cyo','tyo'],'ちぇ':['che','tye'],
+    'にゃ':['nya'],'にゅ':['nyu'],'にょ':['nyo'],
+    'ひゃ':['hya'],'ひゅ':['hyu'],'ひょ':['hyo'],
+    'みゃ':['mya'],'みゅ':['myu'],'みょ':['myo'],
+    'りゃ':['rya'],'りゅ':['ryu'],'りょ':['ryo'],
+    'ぎゃ':['gya'],'ぎゅ':['gyu'],'ぎょ':['gyo'],
+    'じゃ':['ja','zya','jya'],'じゅ':['ju','zyu','jyu'],'じょ':['jo','zyo','jyo'],
+    'ぢゃ':['dya'],'ぢゅ':['dyu'],'ぢょ':['dyo'],
+    'びゃ':['bya'],'びゅ':['byu'],'びょ':['byo'],
+    'ぴゃ':['pya'],'ぴゅ':['pyu'],'ぴょ':['pyo'],
+    'てぃ':['thi','tei'],'てゅ':['thu','teyu'],
+    'でぃ':['dhi','dei'],'でゅ':['dhu','deyu'],
+    'ふぁ':['fa','fua'],'ふぃ':['fi','fui'],'ふぇ':['fe','fue'],'ふぉ':['fo','fuo'],
+    'うぃ':['wi','uxi','uli'],'うぇ':['we','uxe','ule'],
+    'ぁ':['la','xa'],'ぃ':['li','xi'],'ぅ':['lu','xu'],'ぇ':['le','xe'],'ぉ':['lo','xo'],
+    'ゃ':['lya','xya'],'ゅ':['lyu','xyu'],'ょ':['lyo','xyo'],
+    'っ':['ltu','xtu','ltsu'],
+    'ー':['-']
+  };
+
+  // B7: original words remain immutable reference data for per-theme restoration.
+  const originalWordSets = Object.fromEntries(categoryList.map(cat => [cat.id, cat.words.map(w => ({kanji:w.kanji, kana:w.kana}))]));
+  const VOCAB_STORAGE_KEY = 'typing_vocab_b7_v1'; // B7 data migration
+  const VOCAB_STORAGE_B8 = 'typing_vocab_b8_v1';
+  const TEACHER_PASSWORD_KEY = 'typing_teacher_auth_b8';
+  const defaultCategoryIds = categoryList.map(c => c.id);
+  let teacherUnlocked = false;
+  let vocabEditingIndex = -1;
+
+  async function hashTeacherPassword(password, salt) {
+    const bytes = new TextEncoder().encode(salt + ':' + password);
+    const digest = await crypto.subtle.digest('SHA-256', bytes);
+    return Array.from(new Uint8Array(digest), x => x.toString(16).padStart(2,'0')).join('');
+  }
+  function openTeacherLogin() {
+    if (isPlaying) return;
+    if (teacherUnlocked) { document.getElementById('vocab-panel').hidden = false; refreshVocabUI(); return; }
+    const setup = !localStorage.getItem(TEACHER_PASSWORD_KEY);
+    document.getElementById('teacher-login-title').textContent = setup ? '先生用パスワードを初回設定' : '先生用の設定';
+    document.getElementById('teacher-login-note').textContent = setup ? 'このブラウザで使うパスワードを6文字以上で設定してください。忘れると、この端末で編集画面を開けなくなります。' : 'パスワードを入力してください。';
+    document.getElementById('teacher-confirm-wrap').hidden = !setup;
+    document.getElementById('teacher-password').value = '';
+    document.getElementById('teacher-confirm').value = '';
+    document.getElementById('teacher-login-error').textContent = '';
+    document.getElementById('teacher-login-submit').textContent = setup ? '設定して開く' : '開く';
+    document.getElementById('teacher-login').showModal();
+    document.getElementById('teacher-password').focus();
+  }
+  function closeTeacherLogin() { document.getElementById('teacher-login').close(); }
+  async function submitTeacherLogin(event) {
+    event.preventDefault();
+    const password = document.getElementById('teacher-password').value;
+    const error = document.getElementById('teacher-login-error');
+    try {
+      let stored = localStorage.getItem(TEACHER_PASSWORD_KEY);
+      if (!stored) {
+        if (password.length < 6) { error.textContent = '6文字以上で入力してください。'; return; }
+        if (password !== document.getElementById('teacher-confirm').value) { error.textContent = '確認用パスワードが一致しません。'; return; }
+        const salt = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2,'0')).join('');
+        stored = JSON.stringify({salt, hash:await hashTeacherPassword(password,salt)});
+        localStorage.setItem(TEACHER_PASSWORD_KEY,stored);
+      } else {
+        const info = JSON.parse(stored);
+        if ((await hashTeacherPassword(password,info.salt)) !== info.hash) { error.textContent = 'パスワードが違います。'; return; }
+      }
+      teacherUnlocked = true;
+      closeTeacherLogin();
+      document.getElementById('vocab-panel').hidden = false;
+      cancelVocabEdit(); refreshVocabUI();
+    } catch(e) { error.textContent = '設定を保存できません。ブラウザの保存設定をご確認ください。'; }
+  }
+  function lockTeacherEditor() {
+    teacherUnlocked = false;
+    document.getElementById('vocab-panel').hidden = true;
+    cancelVocabEdit();
+  }
+
+
+  function escapeVocabHtml(value) {
+    return String(value).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+  }
+  function cleanVocabWord(word) {
+    if (!word || typeof word !== 'object' || typeof word.kanji !== 'string' || typeof word.kana !== 'string') return null;
+    const kanji = word.kanji.trim(), kana = word.kana.trim();
+    if (!kanji || kanji.length > 60 || !kana || kana.length > 100) return null;
+    // Reject unsupported kana rather than create an impossible-to-complete question.
+    if (!/^[ぁ-ゖー]+$/.test(kana)) return null;
+    if (!kanaToDefaultRoma(kana, 'hepburn') || !isCompleteMatch(kanaToDefaultRoma(kana, 'hepburn'), kana)) return null;
+    if (!kanaToDefaultRoma(kana, 'kunrei') || !isCompleteMatch(kanaToDefaultRoma(kana, 'kunrei'), kana)) return null;
+    return {kanji, kana};
+  }
+
+  function setVocabMessage(message, isError = false) {
+    const el = document.getElementById('vocab-message');
+    el.textContent = message;
+    el.classList.toggle('error', isError);
+  }
+  function getVocabData() {
+    return {version:2, categories: categoryList.map(c => ({id:c.id, name:c.name, words:c.words.map(w=>({kanji:w.kanji,kana:w.kana}))}))};
+  }
+  function validateVocabData(data) {
+    if (!data || typeof data !== 'object') throw new Error('データの形式が違います。');
+    let categories;
+    if (data.version === 1 && data.themes && typeof data.themes === 'object') {
+      categories = defaultCategoryIds.map(id => ({id, name:categoryList.find(c=>c.id===id).name, words:data.themes[id]}));
+    } else if (data.version === 2 && Array.isArray(data.categories)) categories = data.categories;
+    else throw new Error('単語データの形式が違います。');
+    if (categories.length < defaultCategoryIds.length || categories.length > 150) throw new Error('テーマ数が不正です。');
+    const ids = new Set();
+    return categories.map(cat => {
+      if (!cat || typeof cat.id !== 'string' || !/^(week\d+|custom_[a-z0-9_]+)$/.test(cat.id) || ids.has(cat.id)) throw new Error('テーマIDが不正です。');
+      ids.add(cat.id);
+      if (typeof cat.name !== 'string' || !cat.name.trim() || cat.name.length > 70) throw new Error('テーマ名が不正です。');
+      if (!Array.isArray(cat.words) || cat.words.length < 1 || cat.words.length > 500) throw new Error('単語数は1～500語にしてください。');
+      return {id:cat.id, name:cat.name.trim(), words:cat.words.map((w,i) => {
+        const cleaned = cleanVocabWord(w);
+        if (!cleaned) throw new Error(cat.name+'の'+(i+1)+'語目の読みが不正です。');
+        return cleaned;
+      })};
+    }).filter(c=>true);
+  }
+  function applyVocabData(data) {
+    const cats = validateVocabData(data);
+    if (defaultCategoryIds.some(id => !cats.some(c=>c.id===id))) throw new Error('元のテーマが不足しています。');
+    categoryList.splice(0,categoryList.length,...cats);
+    const selected = document.getElementById('category-select').value;
+    initCategories();
+    if (categoryList.some(c=>c.id===selected)) document.getElementById('category-select').value=selected;
+    // 生徒用では編集画面を更新しません。
+  }
+  function persistVocab() {
+    try {
+      localStorage.setItem(VOCAB_STORAGE_B8, JSON.stringify(getVocabData()));
+      return true;
+    } catch (e) {
+      setVocabMessage('自動保存できませんでした。「単語データを保存」でバックアップしてください。', true);
+      return false;
+    }
+  }
+  function loadVocab() {
+    try {
+      const raw = localStorage.getItem(VOCAB_STORAGE_B8) || localStorage.getItem(VOCAB_STORAGE_KEY);
+      if (raw) applyVocabData(JSON.parse(raw));
+    } catch (e) {
+      setVocabMessage('保存済みの単語データを読み込めませんでした。元の単語を表示しています。', true);
+    }
+  }
+  function currentVocabCategory() {
+    return categoryList.find(c => c.id === document.getElementById('category-select').value) || categoryList[0];
+  }
+  function toggleVocabEditor() { if (teacherUnlocked) { document.getElementById('vocab-panel').hidden = !document.getElementById('vocab-panel').hidden; refreshVocabUI(); } }
+  function addCustomTheme() {
+    if (!teacherUnlocked) return;
+    const name = document.getElementById('new-theme-name').value.trim();
+    const word = cleanVocabWord({kanji:document.getElementById('new-theme-word').value,kana:document.getElementById('new-theme-kana').value});
+    if (!name || name.length>70 || !word) { setVocabMessage('テーマ名・最初の単語・ひらがなの読みを正しく入力してください。',true); return; }
+    if (categoryList.length >= 150) { setVocabMessage('テーマは最大150件です。',true); return; }
+    const id = 'custom_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8);
+    categoryList.push({id,name,words:[word]});
+    initCategories(); document.getElementById('category-select').value=id;
+    for (const field of ['new-theme-name','new-theme-word','new-theme-kana']) document.getElementById(field).value='';
+    const saved=persistVocab(); refreshVocabUI(); resetGame();
+    if (saved) setVocabMessage('新しいテーマを作成しました。');
+  }
+  function renameCustomTheme() {
+    if (!teacherUnlocked) return;
+    const cat=currentVocabCategory();
+    if (defaultCategoryIds.includes(cat.id)) {setVocabMessage('元の10テーマの名前は変更できません。',true);return;}
+    const name=prompt('新しいテーマ名を入力してください。',cat.name);
+    if (name===null) return;
+    if (!name.trim() || name.trim().length>70) {setVocabMessage('テーマ名は1～70文字にしてください。',true);return;}
+    cat.name=name.trim(); persistVocab(); refreshVocabUI();
+    setVocabMessage('テーマ名を変更しました。');
+  }
+  function deleteCustomTheme() {
+    if (!teacherUnlocked) return;
+    const cat=currentVocabCategory();
+    if (defaultCategoryIds.includes(cat.id)) {setVocabMessage('元の10テーマは削除できません。',true);return;}
+    if (!confirm('テーマ「'+cat.name+'」と単語'+cat.words.length+'語をすべて削除しますか？'))return;
+    categoryList.splice(categoryList.indexOf(cat),1);
+    initCategories(); persistVocab(); refreshVocabUI(); resetGame();
+    setVocabMessage('テーマを削除しました。');
+  }
+  function cancelVocabEdit() {
+    vocabEditingIndex = -1;
+    document.getElementById('vocab-kanji').value = '';
+    document.getElementById('vocab-kana').value = '';
+    document.getElementById('vocab-save').textContent = '単語を追加';
+    document.getElementById('vocab-cancel').hidden = true;
+  }
+  function editVocabWord(index) {
+    if (!teacherUnlocked) return;
+    const word = currentVocabCategory().words[index];
+    if (!word) return;
+    vocabEditingIndex = index;
+    document.getElementById('vocab-kanji').value = word.kanji;
+    document.getElementById('vocab-kana').value = word.kana;
+    document.getElementById('vocab-save').textContent = (index + 1) + '番を上書き';
+    document.getElementById('vocab-cancel').hidden = false;
+    document.getElementById('vocab-kanji').focus();
+  }
+  function saveVocabWord() {
+    if (!teacherUnlocked) return;
+    const cat = currentVocabCategory();
+    const word = cleanVocabWord({kanji: document.getElementById('vocab-kanji').value, kana: document.getElementById('vocab-kana').value});
+    if (!word) { setVocabMessage('表示する言葉と、対応するひらがなの読みを入力してください。未対応の文字は登録できません。', true); return; }
+    if (vocabEditingIndex < 0 && cat.words.length >= 500) { setVocabMessage('1テーマにつき最大500語です。', true); return; }
+    const isEdit = vocabEditingIndex >= 0;
+    if (isEdit && !cat.words[vocabEditingIndex]) { cancelVocabEdit(); return; }
+    if (isEdit) cat.words[vocabEditingIndex] = word;
+    else cat.words.push(word);
+    cancelVocabEdit();
+    const saved = persistVocab();
+    refreshVocabUI();
+    if (saved) setVocabMessage(isEdit ? '単語を上書きしました。' : '単語を追加しました。');
+    resetGame();
+  }
+  function deleteVocabWord(index) {
+    if (!teacherUnlocked) return;
+    const cat = currentVocabCategory();
+    if (cat.words.length <= 1) { setVocabMessage('各テーマに最低1語必要です。', true); return; }
+    const word = cat.words[index];
+    if (!word || !confirm('「' + word.kanji + '」を削除しますか？')) return;
+    cat.words.splice(index, 1);
+    cancelVocabEdit();
+    const saved = persistVocab();
+    refreshVocabUI();
+    if (saved) setVocabMessage('単語を削除しました。');
+    resetGame();
+  }
+  function refreshVocabUI() {
+    const cat = currentVocabCategory();
+    const select = document.getElementById('category-select');
+    for (const opt of select.options) {
+      const c = categoryList.find(item => item.id === opt.value);
+      if (c) opt.textContent = c.name.replace(/（\d+問）/, '') + '（' + c.words.length + '問）';
+    }
+    document.getElementById('start-title').textContent = 'タイピング練習（全' + cat.words.length + '問）';
+    document.getElementById('rename-theme').disabled = defaultCategoryIds.includes(cat.id);
+    document.getElementById('delete-theme').disabled = defaultCategoryIds.includes(cat.id);
+    const restoreButton = document.getElementById('restore-theme');
+    if (restoreButton) restoreButton.disabled = !defaultCategoryIds.includes(cat.id);
+    const list = document.getElementById('vocab-list');
+    list.replaceChildren();
+    cat.words.forEach((word, index) => {
+      const entry = document.createElement('div'); entry.className = 'vocab-entry';
+      const name = document.createElement('span'); name.className = 'entry-name';
+      name.textContent = (index + 1) + '. ' + word.kanji + '（' + word.kana + '）';
+      const edit = document.createElement('button'); edit.type = 'button'; edit.textContent = '編集'; edit.addEventListener('click', () => editVocabWord(index));
+      const del = document.createElement('button'); del.type = 'button'; del.textContent = '削除'; del.addEventListener('click', () => deleteVocabWord(index));
+      entry.append(name, edit, del); list.appendChild(entry);
+    });
+    if (!isPlaying) document.getElementById('progress-val').textContent = '0 / ' + cat.words.length;
+  }
+  function exportVocab() {
+    if (!teacherUnlocked) return;
+    const blob = new Blob([JSON.stringify(getVocabData(), null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a'); link.href = url; link.download = 'typing_words_B8.json';
+    document.body.appendChild(link); link.click(); link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setVocabMessage('単語データを書き出しました。ファイルを保管してください。');
+  }
+  async function importVocab(event) {
+    if (!teacherUnlocked) return;
+    const file = event.target.files && event.target.files[0];
+    event.target.value = '';
+    if (!file) return;
+    if (file.size > 300000) { setVocabMessage('ファイルが大きすぎます。', true); return; }
+    try {
+      const data = JSON.parse(await file.text());
+      validateVocabData(data);
+      if (!confirm('現在の全テーマと単語を読み込んだデータで置き換えます。続けますか？')) return;
+      applyVocabData(data);
+      cancelVocabEdit();
+      const saved = persistVocab();
+      resetGame();
+      if (saved) setVocabMessage('すべてのテーマと単語を読み込みました。');
+    } catch (e) { setVocabMessage('読み込み失敗：' + e.message, true); }
+  }
+  function restoreVocabTheme() {
+    if (!teacherUnlocked) return;
+    const cat = currentVocabCategory();
+    if (!defaultCategoryIds.includes(cat.id)) { setVocabMessage('追加したテーマには初期状態がありません。',true); return; }
+    if (!confirm('このテーマの変更を取り消して、元の25問に戻しますか？')) return;
+    cat.words = originalWordSets[cat.id].map(w => ({...w}));
+    cancelVocabEdit();
+    const saved = persistVocab();
+    refreshVocabUI(); resetGame();
+    if (saved) setVocabMessage('このテーマを元の25問に戻しました。');
+  }
+
+  const fingerMap = {
+    'q': { keyId: 'key-q', fingerId: 'fin-l5' }, 'a': { keyId: 'key-a', fingerId: 'fin-l5' }, 'z': { keyId: 'key-z', fingerId: 'fin-l5' },
+    'w': { keyId: 'key-w', fingerId: 'fin-l4' }, 's': { keyId: 'key-s', fingerId: 'fin-l4' }, 'x': { keyId: 'key-x', fingerId: 'fin-l4' },
+    'e': { keyId: 'key-e', fingerId: 'fin-l3' }, 'd': { keyId: 'key-d', fingerId: 'fin-l3' }, 'c': { keyId: 'key-c', fingerId: 'fin-l3' },
+    'r': { keyId: 'key-r', fingerId: 'fin-l2' }, 'f': { keyId: 'key-f', fingerId: 'fin-l2' }, 'v': { keyId: 'key-v', fingerId: 'fin-l2' },
+    't': { keyId: 'key-t', fingerId: 'fin-l2' }, 'g': { keyId: 'key-g', fingerId: 'fin-l2' }, 'b': { keyId: 'key-b', fingerId: 'fin-l2' },
+    'y': { keyId: 'key-y', fingerId: 'fin-r2' }, 'h': { keyId: 'key-h', fingerId: 'fin-r2' }, 'n': { keyId: 'key-n', fingerId: 'fin-r2' },
+    'u': { keyId: 'key-u', fingerId: 'fin-r2' }, 'j': { keyId: 'key-j', fingerId: 'fin-r2' }, 'm': { keyId: 'key-m', fingerId: 'fin-r2' },
+    'i': { keyId: 'key-i', fingerId: 'fin-r3' }, 'k': { keyId: 'key-k', fingerId: 'fin-r3' }, ',': { keyId: 'key-,', fingerId: 'fin-r3' },
+    'o': { keyId: 'key-o', fingerId: 'fin-r4' }, 'l': { keyId: 'key-l', fingerId: 'fin-r4' }, '.': { keyId: 'key-.', fingerId: 'fin-r4' },
+    'p': { keyId: 'key-p', fingerId: 'fin-r5' }, ';': { keyId: 'key-;', fingerId: 'fin-r5' }, '/': { keyId: 'key-/', fingerId: 'fin-r5' },
+    '-': { keyId: 'key--', fingerId: 'fin-r5' }, ' ': { keyId: 'key-space', fingerId: 'fin-r1' }
+  };
+
+  let currentWords = [];
+  let currentWordIdx = 0;
+  let currentKana = "";
+  let currentTypedRoma = "";
+
+  let totalTyped = 0;
+  let totalMiss = 0;
+  let startTime = null;
+  let isPlaying = false;
+
+  // 単語ごとの詳細記録
+  let wordLogData = {};
+  let wordStartTime = null;
+
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  function playSound(freq, duration) {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+  }
+
+  function initCategories() {
+    const select = document.getElementById('category-select');
+    select.innerHTML = '';
+    categoryList.forEach(cat => {
+      const opt = document.createElement('option');
+      opt.value = cat.id;
+      opt.textContent = cat.name;
+      select.appendChild(opt);
+    });
+  }
+
+  function changeCategory() { resetGame(); }
+  function changeStyle() { if (isPlaying) renderRomaDisplay(); }
+
+  function getPreferCandidate(candidates, style) {
+    if (!candidates || candidates.length === 0) return "";
+    if (style === 'kunrei') {
+      const kunreiFirsts = ['sya','syu','syo','sye','tya','tyu','tyo','tye','zi','zya','zyu','zyo','si','ti','tu','hu'];
+      const matched = candidates.find(c => kunreiFirsts.includes(c));
+      if (matched) return matched;
+    }
+    return candidates[0];
+  }
+
+  function kanaToDefaultRoma(kana, style) {
+    let res = "";
+    let i = 0;
+    while (i < kana.length) {
+      if (i + 1 < kana.length && ROMAJI_MAP[kana.substring(i, i + 2)]) {
+        let cands = ROMAJI_MAP[kana.substring(i, i + 2)];
+        res += getPreferCandidate(cands, style);
+        i += 2;
+      } else if (kana[i] === 'っ' && i + 1 < kana.length) {
+        let nextChar = kana[i + 1];
+        let nextCandidates = ROMAJI_MAP[nextChar];
+        if (nextCandidates) {
+          let nextRoma = getPreferCandidate(nextCandidates, style);
+          res += nextRoma.charAt(0);
+        } else {
+          res += "ltu";
+        }
+        i += 1;
+      } else if (kana[i] === 'ん') {
+        if (i === kana.length - 1) {
+          res += "nn";
+        } else {
+          let nextChar = kana[i + 1];
+          let nextCandidates = ROMAJI_MAP[nextChar] || [];
+          let firstCharOfNext = nextCandidates[0] ? nextCandidates[0].charAt(0) : '';
+          if (['a','i','u','e','o','y','n'].includes(firstCharOfNext)) {
+            res += "nn";
+          } else {
+            res += "n";
+          }
+        }
+        i += 1;
+      } else if (ROMAJI_MAP[kana[i]]) {
+        let cands = ROMAJI_MAP[kana[i]];
+        res += getPreferCandidate(cands, style);
+        i += 1;
+      } else {
+        res += kana[i];
+        i += 1;
+      }
+    }
+    return res;
+  }
+
+  function splitKanaUnits(kana) {
+    let units = [];
+    let i = 0;
+    while (i < kana.length) {
+      if (i + 1 < kana.length && ROMAJI_MAP[kana.substring(i, i + 2)]) {
+        units.push(kana.substring(i, i + 2));
+        i += 2;
+      } else {
+        units.push(kana[i]);
+        i += 1;
+      }
+    }
+    return units;
+  }
+
+  // B6: 入力途中・完了・ガイド表示を同一の候補探索で判定する。
+  // これにより「ん」の判定が画面表示と完了判定で食い違わない。
+  function matchRomaji(input, kana) {
+    const style = document.getElementById('style-select')?.value || 'hepburn';
+    const typed = input.toLowerCase();
+    const memo = new Set();
+    function search(pos, idx, guide) {
+      const state = pos + ':' + idx;
+      if (memo.has(state)) return null;
+      if (pos === typed.length) {
+        return { complete: idx === kana.length, guide: guide + kanaToDefaultRoma(kana.slice(idx), style), kanaPos: idx };
+      }
+      if (idx >= kana.length) { memo.add(state); return null; }
+      const rest = kana.slice(idx);
+      const options = [];
+      if (rest.startsWith('ん')) {
+        options.push(['nn', 1], ['xn', 1]);
+        if (rest.length > 1) {
+          const next = rest.slice(1);
+          const unit = ROMAJI_MAP[next.slice(0, 2)] ? next.slice(0, 2) : next[0];
+          const nextCandidates = ROMAJI_MAP[unit] || [];
+          // 次が子音なら n だけでも「ん」を確定できる。
+          // な行の場合も n + na のように区切れるが、母音・や行は不可。
+          if (nextCandidates.some(c => !'aiueoy'.includes(c[0]))) options.push(['n', 1]);
+        }
+      }
+      if (rest.startsWith('っ') && rest.length > 1) {
+        const next = rest.slice(1);
+        const unit = ROMAJI_MAP[next.slice(0, 2)] ? next.slice(0, 2) : next[0];
+        for (const c of (ROMAJI_MAP[unit] || [])) {
+          if (!'aiueon'.includes(c[0])) options.push([c[0], 1]);
+        }
+      }
+      for (const size of [2, 1]) {
+        const unit = rest.slice(0, size);
+        if (unit.length === size && ROMAJI_MAP[unit] && !(unit === 'ん')) {
+          for (const c of ROMAJI_MAP[unit]) options.push([c, size]);
+        }
+      }
+      // 全候補を再帰的に探索。候補の途中なら正しいプレフィックス。
+      for (const [roman, consumed] of options) {
+        const left = typed.slice(pos);
+        if (left.length < roman.length && roman.startsWith(left)) {
+          return { complete: false, guide: guide + roman + kanaToDefaultRoma(kana.slice(idx + consumed), style), kanaPos: idx };
+        }
+        if (left.startsWith(roman)) {
+          const result = search(pos + roman.length, idx + consumed, guide + roman);
+          if (result) return result;
+        }
+      }
+      memo.add(state);
+      return null;
+    }
+    return search(0, 0, '');
+  }
+
+  function getDisplayParts(input, targetKana) {
+    const found = matchRomaji(input, targetKana);
+    return found ? { guide: found.guide, matchedIndex: input.length } :
+      { guide: kanaToDefaultRoma(targetKana, document.getElementById('style-select')?.value || 'hepburn'), matchedIndex: 0 };
+  }
+
+  function isValidInput(input, targetKana) {
+    return matchRomaji(input, targetKana) !== null;
+  }
+
+  function getConvertedKana(input, targetKana) {
+    const found = matchRomaji(input, targetKana);
+    const pos = found ? found.kanaPos : 0;
+    return { convertedText: targetKana.slice(0, pos), remainingInput: '', remainingKana: targetKana.slice(pos) };
+  }
+
+  function isCompleteMatch(input, targetKana) {
+    const found = matchRomaji(input, targetKana);
+    return !!(found && found.complete);
+  }
+
+  function startGame() {
+    document.getElementById('start-overlay').style.display = 'none';
+    document.getElementById('result-overlay').style.display = 'none';
+    document.getElementById('btn-retry-word').style.display = 'flex';
+
+    const selectedCatId = document.getElementById('category-select').value;
+    const cat = categoryList.find(c => c.id === selectedCatId) || categoryList[0];
+    
+    currentWords = [...cat.words];
+    // ランダム出題は元の単語データを変更せず、今回の練習分だけ並び替える。
+    if (document.getElementById('order-select').value === 'random') {
+      for (let i = currentWords.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [currentWords[i], currentWords[j]] = [currentWords[j], currentWords[i]];
+      }
+    }
+    currentWordIdx = 0;
+    totalTyped = 0;
+    totalMiss = 0;
+    wordLogData = {};
+    isPlaying = true;
+    startTime = Date.now();
+
+    updateScoreDisplay();
+    nextWord();
+  }
+
+  function resetGame() {
+    isPlaying = false;
+    document.getElementById('start-overlay').style.display = 'flex';
+    document.getElementById('result-overlay').style.display = 'none';
+    document.getElementById('btn-retry-word').style.display = 'none';
+    document.getElementById('progress-val').textContent = '0 / ' + currentVocabCategory().words.length;
+    document.getElementById('kps-val').textContent = '0.0';
+    document.getElementById('accuracy-val').textContent = '100%';
+    document.getElementById('miss-val').textContent = '0';
+    document.getElementById('word-kanji').textContent = '----';
+    document.getElementById('word-kana').textContent = '----';
+    document.getElementById('roma-typed').textContent = '';
+    document.getElementById('roma-next').textContent = '';
+    document.getElementById('roma-untyped').textContent = '';
+    highlightKey(null);
+  }
+
+  function retryCurrentWord() {
+    if (!isPlaying) return;
+    currentTypedRoma = "";
+    if (wordLogData[currentWordIdx]) {
+      wordLogData[currentWordIdx].history = [];
+      wordLogData[currentWordIdx].missCount = 0;
+    }
+    renderRomaDisplay();
+  }
+
+  function nextWord() {
+    if (currentWordIdx >= currentWords.length) {
+      endGame();
+      return;
+    }
+
+    const wordObj = currentWords[currentWordIdx];
+    document.getElementById('word-kanji').textContent = wordObj.kanji;
+    document.getElementById('word-kana').textContent = wordObj.kana;
+
+    currentKana = wordObj.kana;
+    currentTypedRoma = "";
+    wordStartTime = Date.now();
+
+    wordLogData[currentWordIdx] = {
+      kanji: wordObj.kanji,
+      kana: wordObj.kana,
+      history: [], // { type: 'ok'|'err', char: 'A', kanaPos: int }
+      missCount: 0,
+      totalTyped: 0,
+      timeSec: 0
+    };
+
+    renderRomaDisplay();
+  }
+
+  function renderRomaDisplay() {
+    const { guide, matchedIndex } = getDisplayParts(currentTypedRoma, currentKana);
+
+    let typedPart = guide.slice(0, matchedIndex);
+    let nextPart = "";
+    let untypedPart = "";
+
+    if (matchedIndex < guide.length) {
+      nextPart = guide.charAt(matchedIndex);
+      untypedPart = guide.slice(matchedIndex + 1);
+    }
+
+    document.getElementById('roma-typed').textContent = typedPart.toUpperCase();
+    document.getElementById('roma-next').textContent = nextPart.toUpperCase();
+    document.getElementById('roma-untyped').textContent = untypedPart.toUpperCase();
+
+    const nextChar = nextPart.toLowerCase();
+    highlightKey(nextChar);
+  }
+
+  function highlightKey(char) {
+    document.querySelectorAll('.key').forEach(k => k.classList.remove('active'));
+    document.querySelectorAll('.finger-part').forEach(f => f.classList.remove('active-finger'));
+
+    if (!char || !isPlaying) return;
+
+    const fingerInfo = fingerMap[char];
+    if (fingerInfo) {
+      const keyElem = document.getElementById(fingerInfo.keyId);
+      if (keyElem) keyElem.classList.add('active');
+
+      const finElem = document.getElementById(fingerInfo.fingerId);
+      if (finElem) finElem.classList.add('active-finger');
+    }
+  }
+
+  function triggerMissEffect() {
+    const dispArea = document.getElementById('display-area');
+    dispArea.classList.remove('miss-effect');
+    void dispArea.offsetWidth;
+    dispArea.classList.add('miss-effect');
+    setTimeout(() => {
+      dispArea.classList.remove('miss-effect');
+    }, 250);
+  }
+
+  window.addEventListener('keydown', (e) => {
+    if (e.target instanceof HTMLElement && (e.target.closest('input, textarea, select, button') || e.target.isContentEditable)) return;
+    if (e.key === 'Escape' && isPlaying) {
+      e.preventDefault();
+      retryCurrentWord();
+      return;
+    }
+
+    if (e.key === ' ' && !isPlaying) {
+      e.preventDefault();
+      startGame();
+      return;
+    }
+
+    if (!isPlaying || e.key.length !== 1) return;
+
+    const key = e.key.toLowerCase();
+    const testInput = currentTypedRoma + key;
+    const currentLog = wordLogData[currentWordIdx];
+
+    // 現在変換できているかなの文字数を計算
+    const convBefore = getConvertedKana(currentTypedRoma, currentKana);
+    const kanaPos = convBefore.convertedText.length;
+
+    if (isValidInput(testInput, currentKana)) {
+      playSound(800, 0.05);
+      currentTypedRoma = testInput;
+      totalTyped++;
+      if (currentLog) {
+        currentLog.totalTyped++;
+        currentLog.history.push({ type: 'ok', char: key.toUpperCase(), kanaPos: kanaPos });
+      }
+
+      if (isCompleteMatch(currentTypedRoma, currentKana)) {
+        if (currentLog) {
+          currentLog.timeSec = Math.max(0.1, (Date.now() - wordStartTime) / 1000);
+        }
+        currentWordIdx++;
+        nextWord();
+      } else {
+        renderRomaDisplay();
+      }
+    } else {
+      playSound(200, 0.15);
+      totalMiss++;
+      if (currentLog) {
+        currentLog.missCount++;
+        currentLog.history.push({ type: 'err', char: key.toUpperCase(), kanaPos: kanaPos });
+      }
+
+      triggerMissEffect();
+    }
+
+    updateScoreDisplay();
+  });
+
+  function updateScoreDisplay() {
+    const elapsedSec = startTime ? Math.max(0.1, (Date.now() - startTime) / 1000) : 1;
+    const kps = (totalTyped / elapsedSec).toFixed(1);
+    const totalAttempt = totalTyped + totalMiss;
+    const accuracy = totalAttempt > 0 ? Math.round((totalTyped / totalAttempt) * 100) : 100;
+
+    document.getElementById('progress-val').textContent = `${currentWordIdx} / ${currentWords.length}`;
+    document.getElementById('kps-val').textContent = kps;
+    document.getElementById('accuracy-val').textContent = accuracy + '%';
+    document.getElementById('miss-val').textContent = totalMiss;
+  }
+
+  function endGame() {
+    isPlaying = false;
+    highlightKey(null);
+    document.getElementById('btn-retry-word').style.display = 'none';
+
+    const elapsedSec = Math.max(1, Math.round((Date.now() - startTime) / 1000));
+    const kps = (totalTyped / elapsedSec).toFixed(1);
+    const totalAttempt = totalTyped + totalMiss;
+    const accuracy = totalAttempt > 0 ? Math.round((totalTyped / totalAttempt) * 100) : 100;
+    const score = Math.round(totalTyped * 10 * (accuracy / 100));
+
+    // 全員共通のランク基準：打鍵速度と正確率の両方を満たすこと。
+    // 画面に表示する打鍵/秒（小数第1位）と正確率（整数）で判定する。
+    const displayedKps = Number(kps);
+    let rank = 'C';
+    if (displayedKps >= 3.0 && accuracy >= 97) rank = 'S';
+    else if (displayedKps >= 2.0 && accuracy >= 95) rank = 'A';
+    else if (displayedKps >= 1.0 && accuracy >= 90) rank = 'B';
+
+    document.getElementById('res-kps').textContent = kps;
+    document.getElementById('res-acc').textContent = accuracy + '%';
+    document.getElementById('res-miss').textContent = totalMiss;
+
+    document.getElementById('res-score').textContent = score;
+    document.getElementById('res-keys').textContent = totalTyped;
+    document.getElementById('res-time').textContent = elapsedSec + '秒';
+    document.getElementById('res-rank').textContent = rank;
+
+    buildMissList();
+
+    document.getElementById('result-overlay').style.display = 'flex';
+  }
+
+  // 写真の表示形式を忠実に再現する生成処理
+  function buildMissList() {
+    const container = document.getElementById('miss-log-list');
+    container.innerHTML = '';
+
+    const missedWords = Object.values(wordLogData).filter(w => w.missCount > 0);
+
+    if (missedWords.length === 0) {
+      container.innerHTML = '<div style="text-align:center; color:#16a34a; font-weight:bold; padding: 16px;">🎉 ノーミス達成！完璧なタイピングです！</div>';
+      return;
+    }
+
+    missedWords.forEach(data => {
+      const kanaUnits = splitKanaUnits(data.kana);
+      
+      // 各かな単位ごとにミスがあるかを記録するマップ
+      let errKanaIndices = new Set();
+      data.history.filter(h => h.type === 'err').forEach(h => {
+        // kanaPosの位置にあるかな単位を特定
+        let currentLen = 0;
+        for (let uIdx = 0; uIdx < kanaUnits.length; uIdx++) {
+          let uLen = kanaUnits[uIdx].length;
+          if (h.kanaPos >= currentLen && h.kanaPos < currentLen + uLen) {
+            errKanaIndices.add(uIdx);
+            break;
+          }
+          currentLen += uLen;
+        }
+      });
+
+      // 1. ふりがな表示（ミスのあるかな文字だけ赤文字）
+      let kanaHtml = "";
+      kanaUnits.forEach((unit, idx) => {
+        if (errKanaIndices.has(idx)) {
+          kanaHtml += `<span class="char-err">${unit}</span>`;
+        } else {
+          kanaHtml += unit;
+        }
+      });
+
+      // 2. ローマ字表示（ひらがなごとに半角スペース1つ空ける、ミス文字は赤文字）
+      let romaHtml = "";
+      kanaUnits.forEach((unit, idx) => {
+        // このかな単位に関連する入力履歴を抽出
+        let unitLogs = data.history.filter(h => {
+          let currentLen = 0;
+          for (let uIdx = 0; uIdx < idx; uIdx++) {
+            currentLen += kanaUnits[uIdx].length;
+          }
+          let uLen = kanaUnits[idx].length;
+          return h.kanaPos >= currentLen && h.kanaPos < currentLen + uLen;
+        });
+
+        if (unitLogs.length > 0) {
+          unitLogs.forEach(h => {
+            if (h.type === 'err') {
+              romaHtml += `<span class="char-err">${h.char}</span>`;
+            } else {
+              romaHtml += h.char;
+            }
+          });
+        } else {
+          // まだ到達せずにスキップされたかデフォルト表示用
+          const style = document.getElementById('style-select') ? document.getElementById('style-select').value : 'hepburn';
+          romaHtml += kanaToDefaultRoma(unit, style).toUpperCase();
+        }
+
+        romaHtml += " "; // ひらがなごとの半角スペース
+      });
+
+      // 単語ごとのミニ集計
+      const wordTotalAttempt = data.totalTyped + data.missCount;
+      const wordAcc = wordTotalAttempt > 0 ? ((data.totalTyped / wordTotalAttempt) * 100).toFixed(1) : "100.0";
+      const wordKps = data.timeSec > 0 ? (data.totalTyped / data.timeSec).toFixed(2) : "0.00";
+
+      const card = document.createElement('div');
+      card.className = 'miss-card';
+      card.innerHTML = `
+        <div class="miss-kanji">${escapeVocabHtml(data.kanji)}</div>
+        <div class="miss-kana">${kanaHtml}</div>
+        <div class="miss-roma">${romaHtml.trimEnd()}</div>
+        <div class="miss-stats-line">
+          <div>打鍵/秒 <span>${wordKps}</span></div>
+          <div>時間 <span>${data.timeSec.toFixed(2)}秒</span></div>
+          <div>正誤率 <span>${wordAcc}%</span></div>
+          <div>ミス <span class="stat-err">${data.missCount}打</span></div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  function toggleMissLog() {
+    const wrapper = document.getElementById('miss-log-wrapper');
+    const btn = document.getElementById('btn-toggle-log');
+    if (wrapper.style.display === 'none') {
+      wrapper.style.display = 'block';
+      btn.textContent = '詳細を閉じる';
+    } else {
+      wrapper.style.display = 'none';
+      btn.textContent = 'ミスした詳細を見る';
+    }
+  }
+
+  initCategories();
+  // B9: 公開された共通問題データを取得。端末の保存内容には依存しません。
+  async function loadPublishedWords() {
+    const notice = document.getElementById('published-data-notice');
+    try {
+      const response = await fetch('./words.json', {cache:'no-store'});
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      const data = await response.json();
+      applyVocabData(data);
+      notice.textContent = '共通の問題データを読み込みました。';
+    } catch (error) {
+      notice.textContent = '共通データを読み込めなかったため、内蔵の問題を使用しています。';
+      console.warn('問題データの取得に失敗:', error);
+    }
+    resetGame();
+  }
+  loadPublishedWords();
+</script>
+</body>
+</html>
